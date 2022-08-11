@@ -1,0 +1,211 @@
+name: Publish Container Image
+on:
+  workflow_call:
+    inputs:
+      registry:
+        description: The ECR container image registry url
+        required: true
+        type: string
+      repository-name:
+        description: The container image repository name (without version tag)
+        required: true
+        type: string
+      role-to-assume:
+        description: The arn for the role to be used by this workflow
+        required: true
+        type: string
+      major-minor-version:
+        description: The major/minor version of the image that will be used to generate the full tag
+        required: false
+        type: string
+        default: "1.0"
+      pre-release-tag:
+        description: "Append a pre-release-tag to the major-minor-version, ex: 1.0-rc.0"
+        required: false
+        type: string
+        default: ""
+      docker-context:
+        description: The directory context for docker build
+        required: false
+        type: string
+        default: "."
+      title:
+        description: The title to be used for a container image label
+        required: false
+        type: string
+        default: ""
+      description:
+        description: The description to be used for a container image label
+        required: false
+        type: string
+        default: ""
+      authors:
+        description: The authors to be used for a container image label
+        required: false
+        type: string
+        default: ""
+      documentation-url:
+        description: The documentation url to be used for a container image label
+        required: false
+        type: string
+        default: ""
+      test-target:
+        description: A test-target for testing the dockerfile
+        required: false
+        type: string
+        default: ""
+      docker-github-app-id:
+        description: The GitHub Application Id for the GitHub app that will be used to generate a token that is passed to the docker build
+        required: false
+        type: string
+        default: ""
+      helm-github-app-id:
+        description: The GitHub App id of the GitHub app that will be used to update helm-github-repo
+        required: false
+        type: string
+        default: ""
+      helm-github-repo:
+        description: The url for a GitHub repo with a kustomization that needs to be updated with the new image tag
+        required: false
+        type: string
+        default: ""
+      helm-values-path:
+        description: The path for the helm values file to update
+        required: false
+        type: string
+        default: ""
+      helm-values-expression:
+        description: Identifies the parameter in the helm values file to update
+        required: false
+        type: string
+        default: ""
+      build-args:
+        description: Additional build args based to docker build
+        required: false
+        type: string
+        default: ""
+    secrets:
+      docker-github-app-key:
+        description: The PEM file contents for the GitHub app that will be used to generate a token that is passed to the docker build
+        required: false
+      helm-github-app-key:
+        description: The PEM file contents for the GitHub app that will be used to update helm-github-repo
+        required: false
+      secret-build-args:
+        description: Additional build args based to docker build that are secret
+        required: false
+      webhook-url:
+        description: A webhook for Google Space Notifications
+        required: false
+concurrency:
+  group: "publish-${{ inputs.repository-name }}"
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ inputs.role-to-assume }}
+          aws-region: us-east-2
+
+      - name: Get GitHub Application Token
+        id: get-github-app-token
+        if: inputs.docker-github-app-id != ''
+        uses: acceleratelearning/action-get-application-token@v1
+        with:
+          github-app-id: ${{ inputs.docker-github-app-id }}
+          github-app-key: ${{ secrets.docker-github-app-key }}
+
+      - name: Docker Login
+        run: aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ${{ inputs.registry }}
+
+      - name: Get next image tag
+        id: get-next-image-tag
+        uses: acceleratelearning/action-get-next-ecr-image-tag@v1
+        with:
+          registry: ${{ inputs.registry }}
+          repository-name: ${{ inputs.repository-name }}
+          major-minor-version: "${{ inputs.major-minor-version }}"
+          pre-release-tag: ${{ inputs.pre-release-tag }}
+
+      - name: Test container image
+        if: inputs.test-target != ''
+        uses: acceleratelearning/action-build-container-image@v1
+        with:
+          image-name: container-test
+          docker-context: ${{ inputs.docker-context }}
+          title: ${{ inputs.title }}
+          description: ${{ inputs.description }}
+          authors: ${{ inputs.authors }}
+          documentation-url: ${{ inputs.documentation-url }}
+          test-target: ${{ inputs.test-target }}
+          github-token: ${{ steps.get-github-app-token.outputs.github-app-token }}
+          build-args: ${{ inputs.build-args }}
+          secret-build-args: ${{ secrets.secret-build-args }}
+
+      - name: Get Test Results
+        if: inputs.test-target != ''
+        run: |
+          docker run -it --rm container-test cat /testresults/TestResults.xml > TestResults.xml
+          cat TestResults.xml
+
+      - name: Build container image
+        uses: acceleratelearning/action-build-container-image@v1
+        with:
+          image-name: ${{ steps.get-next-image-tag.outputs.next-image-name }}
+          docker-context: ${{ inputs.docker-context }}
+          title: ${{ inputs.title }}
+          description: ${{ inputs.description }}
+          authors: ${{ inputs.authors }}
+          documentation-url: ${{ inputs.documentation-url }}
+          github-token: ${{ steps.get-github-app-token.outputs.github-app-token }}
+          build-args: ${{ inputs.build-args }}
+          secret-build-args: ${{ secrets.secret-build-args }}
+
+      - name: Publish Container Image to ECR
+        shell: pwsh
+        run: |
+          docker push ${{ steps.get-next-image-tag.outputs.next-image-name }}
+          Write-Output "::notice:: Published image ${{ steps.get-next-image-tag.outputs.next-image-name }}"
+
+      - name: Get image scan results
+        uses: acceleratelearning/action-get-ecr-image-scan-results@v1
+        with:
+          registry: ${{ inputs.registry }}
+          repository-name: ${{ inputs.repository-name }}
+          tag: "${{ steps.get-next-image-tag.outputs.next-tag }}"
+
+      - name: Update Helm Values File
+        if: inputs.helm-github-repo != ''
+        uses: acceleratelearning/action-update-helm-values-file@v1
+        with:
+          github-repo: ${{ inputs.helm-github-repo }}
+          path: ${{ inputs.helm-values-path }}
+          yaml-path-expression: ${{ inputs.helm-values-expression }}
+          value: "${{ steps.get-next-image-tag.outputs.next-tag }}"
+          github-app-id: ${{ inputs.helm-github-app-id }}
+          github-app-key: ${{ secrets.helm-github-app-key }}
+
+      - name: Publish GitHub Release\
+        id: publish-release
+        uses: acceleratelearning/action-publish-github-release@v1
+        with:
+          version: "${{ steps.get-next-image-tag.outputs.next-tag }}"
+
+      - name: Google Space Notification
+        uses: acceleratelearning/action-google-space-notification@v1
+        with:
+          title: "Container Image for ${{ inputs.repository-name }}"
+          webhook-url: ${{ secrets.webhook-url }}
+          version: "${{ steps.get-next-image-tag.outputs.next-tag }}"
+          release-notes: "${{ steps.publish-release.outputs.release-notes }}"
+          release-html-url: ${{ steps.publish-release.outputs.release-html-url }}
