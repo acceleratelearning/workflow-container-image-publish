@@ -104,8 +104,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      actions: write
       contents: read
+      pull-requests: read
       id-token: write
     steps:
       - name: Checkout
