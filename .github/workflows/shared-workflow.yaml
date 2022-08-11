@@ -54,16 +54,6 @@ on:
         required: false
         type: string
         default: ""
-      docker-github-app-id:
-        description: The GitHub Application Id for the GitHub app that will be used to generate a token that is passed to the docker build
-        required: false
-        type: string
-        default: ""
-      helm-github-app-id:
-        description: The GitHub App id of the GitHub app that will be used to update helm-github-repo
-        required: false
-        type: string
-        default: ""
       helm-github-repo:
         description: The url for a GitHub repo with a kustomization that needs to be updated with the new image tag
         required: false
@@ -85,8 +75,14 @@ on:
         type: string
         default: ""
     secrets:
+      docker-github-app-id:
+        description: The GitHub Application Id for the GitHub app that will be used to generate a token that is passed to the docker build
+        required: false
       docker-github-app-key:
         description: The PEM file contents for the GitHub app that will be used to generate a token that is passed to the docker build
+        required: false
+      helm-github-app-id:
+        description: The GitHub App id of the GitHub app that will be used to update helm-github-repo
         required: false
       helm-github-app-key:
         description: The PEM file contents for the GitHub app that will be used to update helm-github-repo
@@ -108,6 +104,8 @@ jobs:
     #   pull-requests: read
     #   id-token: write
     permissions: write-all
+    env:
+      DOCKER_GITHUB_APP_ID: ${{ secrets.docker-github-app-id }}  # Can't use secrets in if condition, so use environment variable
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -120,10 +118,10 @@ jobs:
 
       - name: Get GitHub Application Token
         id: get-github-app-token
-        if: inputs.docker-github-app-id != ''
+        if: env.DOCKER_GITHUB_APP_ID != ''
         uses: acceleratelearning/action-get-application-token@v1
         with:
-          github-app-id: ${{ inputs.docker-github-app-id }}
+          github-app-id: ${{ secrets.docker-github-app-id }}
           github-app-key: ${{ secrets.docker-github-app-key }}
 
       - name: Docker Login
@@ -193,7 +191,7 @@ jobs:
           path: ${{ inputs.helm-values-path }}
           yaml-path-expression: ${{ inputs.helm-values-expression }}
           value: "${{ steps.get-next-image-tag.outputs.next-tag }}"
-          github-app-id: ${{ inputs.helm-github-app-id }}
+          github-app-id: ${{ secrets.helm-github-app-id }}
           github-app-key: ${{ secrets.helm-github-app-key }}
 
       - name: Publish GitHub Release\
