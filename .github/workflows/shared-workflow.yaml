@@ -54,6 +54,11 @@ on:
         required: false
         type: string
         default: ""
+      skip-publish-github-release:
+        description: Skip the Publish GitHub Release step
+        required: false
+        type: boolean
+        default: false
       helm-github-repo:
         description: The url for a GitHub repo with a kustomization that needs to be updated with the new image tag
         required: false
@@ -195,6 +200,7 @@ jobs:
           github-app-key: ${{ secrets.helm-github-app-key }}
 
       - name: Publish GitHub Release\
+        if: ! skip-publish-github-release
         id: publish-release
         uses: acceleratelearning/action-publish-github-release@v1
         with:
