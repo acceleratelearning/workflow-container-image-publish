@@ -54,6 +54,11 @@ on:
         required: false
         type: string
         default: ""
+      build-target:
+        description: A test-target for testing the dockerfile
+        required: false
+        type: string
+        default: ""
       skip-publish-github-release:
         description: Skip the Publish GitHub Release step
         required: false
@@ -141,9 +146,24 @@ jobs:
           major-minor-version: "${{ inputs.major-minor-version }}"
           pre-release-tag: ${{ inputs.pre-release-tag }}
 
+      - name: Build Builder Image
+        if: inputs.build-target != ''
+        uses: acceleratelearning/action-build-container-image@v2
+        with:
+          image-name: ${{ steps.get-next-image-tag.outputs.next-image-name }}-build
+          docker-context: ${{ inputs.docker-context }}
+          title: ${{ inputs.title }}
+          description: ${{ inputs.description }}
+          authors: ${{ inputs.authors }}
+          documentation-url: ${{ inputs.documentation-url }}
+          target: ${{ inputs.build-target }}
+          github-token: ${{ steps.get-github-app-token.outputs.github-app-token }}
+          build-args: ${{ inputs.build-args }}
+          secret-build-args: ${{ secrets.secret-build-args }}
+
       - name: Test container image
         if: inputs.test-target != ''
-        uses: acceleratelearning/action-build-container-image@v1
+        uses: acceleratelearning/action-build-container-image@v2
         with:
           image-name: container-test
           docker-context: ${{ inputs.docker-context }}
@@ -163,7 +183,7 @@ jobs:
           cat TestResults.xml
 
       - name: Build container image
-        uses: acceleratelearning/action-build-container-image@v1
+        uses: acceleratelearning/action-build-container-image@v2
         with:
           image-name: ${{ steps.get-next-image-tag.outputs.next-image-name }}
           docker-context: ${{ inputs.docker-context }}
