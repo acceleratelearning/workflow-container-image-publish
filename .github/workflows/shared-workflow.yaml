@@ -105,7 +105,6 @@ on:
         required: false
 concurrency:
   group: "publish-${{ inputs.repository-name }}"
-  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
