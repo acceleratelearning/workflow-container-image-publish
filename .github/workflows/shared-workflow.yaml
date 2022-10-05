@@ -65,10 +65,15 @@ on:
         type: boolean
         default: false
       helm-github-repo:
-        description: The url for a GitHub repo with a kustomization that needs to be updated with the new image tag
+        description: The url for a GitHub repo with a helm chart that needs to be updated with the new image tag
         required: false
         type: string
         default: ""
+      helm-branch-name:
+        description: The branch of the github repo to update
+        required: false
+        type: string
+        default: main
       helm-values-path:
         description: The path for the helm values file to update
         required: false
@@ -209,9 +214,10 @@ jobs:
 
       - name: Update Helm Values File
         if: inputs.helm-github-repo != ''
-        uses: acceleratelearning/action-update-helm-values-file@v1
+        uses: acceleratelearning/action-update-helm-values-file@add-branch-name
         with:
           github-repo: ${{ inputs.helm-github-repo }}
+          branch-name: ${{ inputs.helm-branch-name }}
           path: ${{ inputs.helm-values-path }}
           yaml-path-expression: ${{ inputs.helm-values-expression }}
           value: "${{ steps.get-next-image-tag.outputs.next-tag }}"
