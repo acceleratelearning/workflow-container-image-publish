@@ -214,7 +214,7 @@ jobs:
 
       - name: Update Helm Values File
         if: inputs.helm-github-repo != ''
-        uses: acceleratelearning/action-update-helm-values-file@add-branch-name
+        uses: acceleratelearning/action-update-helm-values-file@v1
         with:
           github-repo: ${{ inputs.helm-github-repo }}
           branch-name: ${{ inputs.helm-branch-name }}
