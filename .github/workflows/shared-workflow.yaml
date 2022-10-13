@@ -224,7 +224,7 @@ jobs:
           github-app-id: ${{ secrets.helm-github-app-id }}
           github-app-key: ${{ secrets.helm-github-app-key }}
 
-      - name: Publish GitHub Release\
+      - name: Publish GitHub Release
         if: inputs.skip-publish-github-release != true
         id: publish-release
         uses: acceleratelearning/action-publish-github-release@v1
