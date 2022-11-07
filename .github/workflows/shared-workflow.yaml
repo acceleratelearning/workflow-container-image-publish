@@ -122,7 +122,7 @@ jobs:
       DOCKER_GITHUB_APP_ID: ${{ secrets.docker-github-app-id }}  # Can't use secrets in if condition, so use environment variable
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
