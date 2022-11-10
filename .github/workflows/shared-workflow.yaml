@@ -82,8 +82,7 @@ on:
     secrets:
       major-minor-version:
         description: The major/minor version of the image that will be used to generate the full tag
-        required: false
-        default: "1.0"
+        required: true
       docker-github-app-id:
         description: The GitHub Application Id for the GitHub app that will be used to generate a token that is passed to the docker build
         required: false
