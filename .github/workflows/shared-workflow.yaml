@@ -204,11 +204,12 @@ jobs:
 
       - name: Update Helm Values File
         if: inputs.helm-github-repo != ''
-        uses: acceleratelearning/action-update-helm-values-file@v1
+        uses: acceleratelearning/action-update-helm-values-file@v2
         with:
           github-repo: ${{ inputs.helm-github-repo }}
           branch-name: ${{ inputs.helm-branch-name }}
-          path: ${{ inputs.helm-values-path }}
+          values-directory: ${{ inputs.helm-values-path }}
+          source-branch: ${{ github.ref_name }}
           yaml-path-expression: ${{ inputs.helm-values-expression }}
           value: "${{ steps.get-next-image-tag.outputs.next-tag }}"
           github-app-id: ${{ secrets.helm-github-app-id }}
