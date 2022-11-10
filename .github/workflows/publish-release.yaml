@@ -15,7 +15,7 @@ jobs:
         id: get-next-release-version
         uses: acceleratelearning/action-get-next-release-version@v1
         with:
-          major-minor-version: "3.0"
+          major-minor-version: "4.0"
 
       - name: Publish GitHub Release
         id: publish-release
