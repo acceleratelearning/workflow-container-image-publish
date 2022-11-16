@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 
 
-[string[]]$markdown = Get-Content ./doc-parts/header.md
+[string[]]$markdown = Get-Content ./doc-gen/header.md
 
 $workflow_definition = Get-Content ./.github/workflows/shared-workflow.yaml | ConvertFrom-Yaml
 $inputs = $workflow_definition["on"]["workflow_call"]["inputs"]
@@ -40,6 +40,6 @@ if ($secrets) {
     }
 }
 
-$markdown += Get-Content ./doc-parts/content.md
+$markdown += Get-Content ./doc-gen/content.md
 
 $markdown | Set-Content -Path "README.md"
