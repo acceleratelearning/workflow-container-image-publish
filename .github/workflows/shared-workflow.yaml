@@ -81,7 +81,7 @@ on:
         default: ""
     secrets:
       major-minor-version:
-        description: The major/minor version of the image that will be used to generate the full tag.  This values is a secret so it can take a value from and organization secret such as `${{ '${{ secrets.LONESTAR_ITERATION }}' }}`
+        description: The major/minor version of the image that will be used to generate the full tag.  This values is a secret so it can take a value from and organization secret such as `secrets.LONESTAR_ITERATION`
         required: true
       docker-github-app-id:
         description: The GitHub Application Id for the GitHub app that will be used to generate a token that is passed to the docker build
