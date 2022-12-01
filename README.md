@@ -59,6 +59,7 @@ on:
       - dev
       - release-*
       - main
+      - main-review
 jobs:
   publish-image:
     name: Publish Container Image
