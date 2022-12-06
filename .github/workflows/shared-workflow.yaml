@@ -106,6 +106,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions: write-all
     env:
       DOCKER_GITHUB_APP_ID: ${{ secrets.docker-github-app-id }} # Can't use secrets in if condition, so use environment variable
