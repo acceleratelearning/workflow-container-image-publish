@@ -57,8 +57,9 @@ on:
     # be from an approved Pull Request
     branches:
       - dev
-      - release-*
+      - release
       - main
+      - main-review
 jobs:
   publish-image:
     name: Publish Container Image
