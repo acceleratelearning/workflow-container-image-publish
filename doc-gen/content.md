@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
   push:
     # Trigger the workflow on a push to any of the protected branches.  This is expected to 
-    # be from an approve Pull Request
+    # be from an approved Pull Request
     branches:
       - dev
       - release-*

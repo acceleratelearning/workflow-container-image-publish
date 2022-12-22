@@ -102,7 +102,8 @@ on:
         description: A webhook for Google Space Notifications (deprecated)
         required: false
 concurrency:
-  group: "publish-${{ inputs.repository-name }}"
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest

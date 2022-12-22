@@ -29,7 +29,7 @@ A shared workflow for publishing a container image at Accelerate Learning. This 
 | docker-github-app-key |  | The PEM file contents for the GitHub app that will be used to generate a token that is passed to the docker build |
 | helm-github-app-id |  | The GitHub App id of the GitHub app that will be used to update helm-github-repo |
 | helm-github-app-key |  | The PEM file contents for the GitHub app that will be used to update helm-github-repo |
-| major-minor-version | :heavy_check_mark: | The major/minor version of the image that will be used to generate the full tag.  This values is a secret so it can take a value from and organization secret such as `${{ secrets.LONESTAR_ITERATION }}` |
+| major-minor-version | :heavy_check_mark: | The major/minor version of the image that will be used to generate the full tag.  This values is a secret so it can take a value from and organization secret such as `secrets.LONESTAR_ITERATION` |
 | secret-build-args |  | Additional build args based to docker build that are secret |
 | webhook-url |  | A webhook for Google Space Notifications (deprecated) |
 # What's New
@@ -54,12 +54,11 @@ on:
   workflow_dispatch:
   push:
     # Trigger the workflow on a push to any of the protected branches.  This is expected to 
-    # be from an approve Pull Request
+    # be from an approved Pull Request
     branches:
       - dev
       - release-*
       - main
-      - main-review
 jobs:
   publish-image:
     name: Publish Container Image
